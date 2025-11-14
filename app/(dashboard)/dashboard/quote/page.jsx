@@ -1,4 +1,4 @@
-import QuoteForm from "./QuoteForm";
+import QuoteForm from "./QuoteForm.jsx";
 import { UserButton } from "@clerk/nextjs";
 
 export default function QuotePage() {
