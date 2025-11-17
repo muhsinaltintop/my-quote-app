@@ -24,3 +24,41 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.preview-html {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.preview-html h1,
+.preview-html h2,
+.preview-html h3,
+.preview-html h4,
+.preview-html h5,
+.preview-html h6 {
+  font-weight: 600;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.preview-html p {
+  margin: 0 0 0.75rem;
+}
+
+.preview-html ul,
+.preview-html ol {
+  margin: 0.5rem 0 0.75rem 1.5rem;
+  padding: 0;
+}
+
+.preview-html ul {
+  list-style: disc;
+}
+
+.preview-html ol {
+  list-style: decimal;
+}
+
+.preview-html b,
+.preview-html strong {
+  font-weight: 600;
+}

@@ -471,7 +471,7 @@ TELEFON NUMARASI: 347-484-4263`);
         </div>
       </div>
 
-      <label className="grid gap-1">
+      <label className="grid gap-2">
         <div className="text-sm font-medium">Notlar / Şartlar (3. sayfada)</div>
         <textarea
           rows={8}
@@ -479,9 +479,10 @@ TELEFON NUMARASI: 347-484-4263`);
           onChange={(e) => setNotes(e.target.value)}
           className="w-full border border-gray-200 rounded-lg px-3 py-2"
         />
+        <HtmlPreview heading="Notlar ön izleme" html={notes} />
       </label>
 
-      <label className="grid gap-1">
+      <label className="grid gap-2">
         <div className="text-sm font-medium">
           Ödeme Talimatları (4. sayfada)
         </div>
@@ -491,6 +492,7 @@ TELEFON NUMARASI: 347-484-4263`);
           onChange={(e) => setPaymentInfo(e.target.value)}
           className="w-full border border-gray-200 rounded-lg px-3 py-2"
         />
+        <HtmlPreview heading="Ödeme talimatları ön izleme" html={paymentInfo} />
       </label>
 
       <div className="flex items-center gap-3">
@@ -505,6 +507,26 @@ TELEFON NUMARASI: 347-484-4263`);
         </span>
       </div>
     </form>
+  );
+}
+
+function HtmlPreview({ heading, html }) {
+  const hasContent = Boolean((html || "").trim());
+
+  return (
+    <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-3 py-2">
+      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+        {heading || "Ön izleme"}
+      </div>
+      {hasContent ? (
+        <div
+          className="preview-html text-sm leading-relaxed text-gray-800"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      ) : (
+        <p className="text-xs italic text-gray-400">İçerik girildiğinde ön izleme burada görünür.</p>
+      )}
+    </div>
   );
 }
 
