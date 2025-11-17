@@ -100,3 +100,131 @@ body {
 .preview-html u {
   text-decoration: underline;
 }
+
+.richtext-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.richtext-modal__dialog {
+  width: min(960px, 100%);
+  max-height: min(90vh, 960px);
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.35);
+  display: flex;
+  flex-direction: column;
+}
+
+.richtext-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background: #f9fafb;
+}
+
+.richtext-toolbar__button {
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4b5563;
+  background: transparent;
+  transition: all 0.15s ease;
+}
+
+.richtext-toolbar__button:hover {
+  color: #111827;
+  background: #fff;
+  border-color: #e5e7eb;
+}
+
+.richtext-toolbar__button.is-active {
+  color: #111827;
+  background: #e0e7ff;
+  border-color: #6366f1;
+}
+
+.richtext-toolbar__divider {
+  width: 1px;
+  height: 24px;
+  background: #e5e7eb;
+  margin: 0 0.25rem;
+}
+
+.richtext-editor__shell {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: #fff;
+}
+
+.richtext-editor {
+  min-height: 320px;
+  padding: 1rem 1.25rem;
+  outline: none;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #111827;
+  overflow-y: auto;
+}
+
+.richtext-editor:focus {
+  box-shadow: inset 0 0 0 1px #111827;
+}
+
+.richtext-editor:empty:before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+}
+
+.richtext-editor h1,
+.richtext-editor h2,
+.richtext-editor h3,
+.richtext-editor h4,
+.richtext-editor h5,
+.richtext-editor h6 {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.richtext-editor h1 {
+  font-size: 1.75rem;
+}
+
+.richtext-editor h2 {
+  font-size: 1.4rem;
+}
+
+.richtext-editor h3 {
+  font-size: 1.2rem;
+}
+
+.richtext-editor p {
+  margin: 0 0 0.75rem;
+}
+
+.richtext-editor ul,
+.richtext-editor ol {
+  margin: 0.75rem 0 0.75rem 1.5rem;
+}
+
+.richtext-editor ul {
+  list-style: disc;
+}
+
+.richtext-editor ol {
+  list-style: decimal;
+}
