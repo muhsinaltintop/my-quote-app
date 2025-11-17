@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 
@@ -120,6 +120,8 @@ ZELLE İLE YAPILAN ÖDEMELER İÇİN
 Aşağıdaki e-posta adresi veya telefon numarası kullanılmalıdır: 
 E-POSTA: accounting@yildiz.law 
 TELEFON NUMARASI: 347-484-4263`);
+
+  const [activeModal, setActiveModal] = useState(null);
 
   const addItem = () =>
     setItems((prev) => [...prev, { description: "", price: "" }]);
@@ -409,6 +411,29 @@ TELEFON NUMARASI: 347-484-4263`);
     URL.revokeObjectURL(url);
   };
 
+  const modalTitle =
+    activeModal === "notes"
+      ? "Notlar / Şartlar"
+      : activeModal === "payment"
+        ? "Ödeme Talimatları"
+        : "";
+
+  const modalValue =
+    activeModal === "notes"
+      ? notes
+      : activeModal === "payment"
+        ? paymentInfo
+        : "";
+
+  const handleModalSave = (value) => {
+    if (activeModal === "notes") {
+      setNotes(value);
+    } else if (activeModal === "payment") {
+      setPaymentInfo(value);
+    }
+    setActiveModal(null);
+  };
+
   return (
     <form
       onSubmit={onSubmit}
@@ -471,27 +496,38 @@ TELEFON NUMARASI: 347-484-4263`);
         </div>
       </div>
 
-      <label className="grid gap-1">
-        <div className="text-sm font-medium">Notlar / Şartlar (3. sayfada)</div>
-        <textarea
-          rows={8}
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2"
-        />
-      </label>
-
-      <label className="grid gap-1">
-        <div className="text-sm font-medium">
-          Ödeme Talimatları (4. sayfada)
+      <section className="grid gap-2">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium">Notlar / Şartlar (3. sayfada)</div>
+          <button
+            type="button"
+            onClick={() => setActiveModal("notes")}
+            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-900 hover:bg-gray-50"
+          >
+            Metni düzenle
+          </button>
         </div>
-        <textarea
-          rows={10}
-          value={paymentInfo}
-          onChange={(e) => setPaymentInfo(e.target.value)}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2"
+        <HtmlPreview heading="Notlar ön izleme" html={notes} />
+      </section>
+
+      <section className="grid gap-2">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium">
+            Ödeme Talimatları (4. sayfada)
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveModal("payment")}
+            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-900 hover:bg-gray-50"
+          >
+            Metni düzenle
+          </button>
+        </div>
+        <HtmlPreview
+          heading="Ödeme talimatları ön izleme"
+          html={paymentInfo}
         />
-      </label>
+      </section>
 
       <div className="flex items-center gap-3">
         <button
@@ -504,8 +540,295 @@ TELEFON NUMARASI: 347-484-4263`);
           PDF indirme olarak gelecektir.
         </span>
       </div>
+      <RichTextModal
+        open={Boolean(activeModal)}
+        title={`${modalTitle} düzenle`}
+        initialValue={modalValue}
+        onCancel={() => setActiveModal(null)}
+        onSave={handleModalSave}
+      />
     </form>
   );
+}
+
+function HtmlPreview({ heading, html }) {
+  const hasContent = Boolean((html || "").trim());
+
+  return (
+    <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-3 py-2">
+      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+        {heading || "Ön izleme"}
+      </div>
+      {hasContent ? (
+        <div
+          className="preview-html text-sm leading-relaxed text-gray-800"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      ) : (
+        <p className="text-xs italic text-gray-400">İçerik girildiğinde ön izleme burada görünür.</p>
+      )}
+    </div>
+  );
+}
+
+function RichTextModal({ open, title, initialValue, onCancel, onSave }) {
+  const editorRef = useRef(null);
+  const [html, setHtml] = useState(initialValue || "");
+  const [commandState, setCommandState] = useState({
+    bold: false,
+    italic: false,
+    underline: false,
+    orderedList: false,
+    bulletList: false,
+    blockTag: "p",
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    const value = initialValue || "";
+    setHtml(value);
+    requestAnimationFrame(() => {
+      if (editorRef.current) {
+        editorRef.current.innerHTML = value;
+        placeCaretAtEnd(editorRef.current);
+      }
+      updateCommandState();
+    });
+  }, [initialValue, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCancel?.();
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onCancel, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = () => updateCommandState();
+    document.addEventListener("selectionchange", handler);
+    return () => document.removeEventListener("selectionchange", handler);
+  }, [open]);
+
+  if (!open) {
+    return null;
+  }
+
+  const updateCommandState = () => {
+    setCommandState({
+      bold: document.queryCommandState("bold"),
+      italic: document.queryCommandState("italic"),
+      underline: document.queryCommandState("underline"),
+      orderedList: document.queryCommandState("insertOrderedList"),
+      bulletList: document.queryCommandState("insertUnorderedList"),
+      blockTag: (document.queryCommandValue("formatBlock") || "p").toLowerCase(),
+    });
+  };
+
+  const handleInput = () => {
+    if (!editorRef.current) return;
+    setHtml(editorRef.current.innerHTML);
+    updateCommandState();
+  };
+
+  const runCommand = (command, value) => {
+    if (!editorRef.current) return;
+    document.execCommand(command, false, value);
+    handleInput();
+  };
+
+  const blockTag = commandState.blockTag;
+
+  return (
+    <div className="richtext-modal">
+      <div className="richtext-modal__dialog">
+        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Html düzenleyici</p>
+            <h2 className="text-lg font-semibold text-gray-900">{title || "Metni düzenle"}</h2>
+          </div>
+          <button
+            type="button"
+            className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+            onClick={onCancel}
+            aria-label="Kapat"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-4 px-5 py-4">
+          <div className="richtext-toolbar" aria-label="Zengin metin araç çubuğu">
+            <ToolbarButton
+              label="Kalın"
+              active={commandState.bold}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                runCommand("bold");
+              }}
+            >
+              B
+            </ToolbarButton>
+            <ToolbarButton
+              label="İtalik"
+              active={commandState.italic}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                runCommand("italic");
+              }}
+            >
+              I
+            </ToolbarButton>
+            <ToolbarButton
+              label="Altı çizili"
+              active={commandState.underline}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                runCommand("underline");
+              }}
+            >
+              U
+            </ToolbarButton>
+            <div className="richtext-toolbar__divider" />
+            {["h1", "h2", "h3"].map((tag) => (
+              <ToolbarButton
+                key={tag}
+                label={`${tag.toUpperCase()} başlık`}
+                active={blockTag === tag}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  runCommand("formatBlock", tag.toUpperCase());
+                }}
+              >
+                {tag.toUpperCase()}
+              </ToolbarButton>
+            ))}
+            <ToolbarButton
+              label="Paragraf"
+              active={blockTag === "p"}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                runCommand("formatBlock", "P");
+              }}
+            >
+              P
+            </ToolbarButton>
+            <ToolbarButton
+              label="Alıntı"
+              active={blockTag === "blockquote"}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                runCommand("formatBlock", "BLOCKQUOTE");
+              }}
+            >
+              “ ”
+            </ToolbarButton>
+            <div className="richtext-toolbar__divider" />
+            <ToolbarButton
+              label="Sırasız liste"
+              active={commandState.bulletList}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                runCommand("insertUnorderedList");
+              }}
+            >
+              • List
+            </ToolbarButton>
+            <ToolbarButton
+              label="Sıralı liste"
+              active={commandState.orderedList}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                runCommand("insertOrderedList");
+              }}
+            >
+              1.
+            </ToolbarButton>
+            <div className="richtext-toolbar__divider" />
+            <ToolbarButton
+              label="Geri al"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                runCommand("undo");
+              }}
+            >
+              ↺
+            </ToolbarButton>
+            <ToolbarButton
+              label="İleri al"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                runCommand("redo");
+              }}
+            >
+              ↻
+            </ToolbarButton>
+          </div>
+
+          <div className="richtext-editor__shell">
+            <div
+              ref={editorRef}
+              className="richtext-editor"
+              contentEditable
+              suppressContentEditableWarning
+              data-placeholder="Metni buraya yazın veya yapıştırın."
+              onInput={handleInput}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-5 py-4">
+          <span className="text-xs text-gray-500">
+            Kaydetmeden önce tüm değişikliklerinizi kontrol edin.
+          </span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-white"
+              onClick={onCancel}
+            >
+              Vazgeç
+            </button>
+            <button
+              type="button"
+              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black"
+              onClick={() => onSave(html)}
+            >
+              Kaydet
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ToolbarButton({ label, children, active, onMouseDown }) {
+  return (
+    <button
+      type="button"
+      className={`richtext-toolbar__button ${active ? "is-active" : ""}`}
+      onMouseDown={onMouseDown}
+      aria-label={label}
+    >
+      {children}
+    </button>
+  );
+}
+
+function placeCaretAtEnd(element) {
+  if (!element) return;
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  range.collapse(false);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
 }
 
 /* === Helpers === */
